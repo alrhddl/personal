@@ -219,8 +219,24 @@
     width:22px;height:9px;background:#22303f;border-radius:0 0 11px 11px}
   .clash{font-size:32px;align-self:center;animation:clashPulse .5s ease-in-out infinite}
   @keyframes clashPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.35) rotate(12deg)}}
+  /* 승리: 점프하며 환호 */
+  .fighter.win{animation:winJump .6s ease-in-out infinite}
+  @keyframes winJump{0%,100%{transform:translateY(0)}35%{transform:translateY(-26px)}60%{transform:translateY(-3px)}}
+  .fighter.win .arm{animation:cheer .6s ease-in-out infinite}
+  @keyframes cheer{0%,100%{transform:rotate(-48deg)}50%{transform:rotate(-72deg)}}
+  .fighter.win .eye::before{display:none}
+  .fighter.win .mouth{border-radius:0 0 16px 16px;height:15px;bottom:11px}
+  /* 패배: 무릎 굽혀 주저앉고 절망 */
+  .fighter.lose{animation:none;transform:translateY(16px) scaleY(.78);transform-origin:bottom center;opacity:.85}
+  .fighter.lose .arm{animation:none;top:46px}
+  .fighter.lose .arm.al{transform:rotate(58deg)}
+  .fighter.lose .arm.ar{transform:rotate(-58deg)}
+  .fighter.lose .leg{height:12px}
+  .fighter.lose .eye.el::before{transform:rotate(-24deg);top:-2px}
+  .fighter.lose .eye.er::before{transform:rotate(24deg);top:-2px}
+  .fighter.lose .mouth{border-radius:14px 14px 0 0;height:10px;bottom:12px}
   @media(prefers-reduced-motion:reduce){
-    .fighter,.fighter .arm,.clash{animation:none}
+    .fighter,.fighter.win,.fighter .arm,.clash{animation:none}
   }
 </style>
 </head>
@@ -257,7 +273,7 @@
 <script>
 const TEAM_COLORS=['#ef4444','#3b82f6','#eab308','#a855f7','#10b981'];
 const TEAM_DEFAULT_NAMES=['1팀','2팀','3팀','4팀','5팀'];
-const START_SCORE=500, PASS_START_BONUS=1000, CHICKEN_STEAL=300;
+const START_SCORE=1000, PASS_START_BONUS=1000, CHICKEN_STEAL=300;
 
 const CARD_DEFS={
   small: {name:'작은 숫자 카드', desc:'내 차례에 사용 → 이동 룰렛이 1~5(각 2칸)으로 바뀐 뒤 굴림 (일회용)'},
@@ -638,10 +654,10 @@ async function resolveTile(pos){
   const type=BOARD[pos];const cur=state.teams[state.turnIdx];
   if(type==='start')setAction(`🏁 출발 칸! 기본 점수가 정산되었습니다.`,[{label:'턴 종료',fn:endTurn}]);
   else if(type==='mini')resolveMini();
-  else if(type==='steal')resolveSteal();
-  else if(type==='swap')resolveSwap();
-  else if(type==='chance')resolveChance();
-  else if(type==='bet')resolveBet();
+  else if(type==='steal')miniGate('강탈',resolveSteal);
+  else if(type==='swap')miniGate('교환',resolveSwap);
+  else if(type==='chance')miniGate('찬스',resolveChance);
+  else if(type==='bet')miniGate('배팅',resolveBet);
   else if(type==='island'){cur.skip=true;
     eventFlash('무인도에 갇혔다 ㅜ.ㅜ');
     setAction(`🏝 무인도 도착! ${cur.name}은(는) 다음 턴을 쉽니다.`,[{label:'턴 종료',fn:endTurn}]);}
@@ -668,6 +684,13 @@ function resolveMini(){
        eventFlash(`야호~! 미니게임에서 승리하였다! +${pts}점`);endTurn();}},
     {label:'실패 (+300)',sec:true,fn:()=>{addScore(cur,300,'미니게임 실패');
        eventFlash('미니게임 실패 +300점');endTurn();}}]);
+}
+function miniGate(name,successFn){
+  const cur=state.teams[state.turnIdx];
+  setAction(`🎮 <b>${name}</b> 칸! ${cur.name}이(가) 미니게임을 진행합니다. 진행자가 결과를 선택하세요.`,
+   [{label:'성공',fn:successFn},
+    {label:'실패 (+300)',sec:true,fn:()=>{addScore(cur,300,name+' 실패');
+       eventFlash(`${name} 미니게임 실패 +300점`);endTurn();}}]);
 }
 
 async function resolveSteal(){
@@ -853,7 +876,7 @@ function chickenBattle(title,teams){
   return new Promise(res=>{
     const parts=teams.map((t,i)=>`
       <div class="fighter-wrap">
-        <div class="fighter ${i%2?'right':'left'}" style="--c:${t.color}">
+        <div class="fighter ${i%2?'right':'left'}" data-id="${t.id}" style="--c:${t.color}">
           <div class="arm al"></div><div class="arm ar"></div>
           <div class="leg ll"></div><div class="leg lr"></div>
           <div class="eye el"></div><div class="eye er"></div>
@@ -864,9 +887,18 @@ function chickenBattle(title,teams){
       <span class="pdot" style="background:${t.color};width:20px;height:20px;box-shadow:none"></span>
       <span style="flex:1">${t.name} 승리</span></button>`).join('');
     openModal(`<h3>${title}</h3><div class="battle">${battle}</div>
-      <p>투닥투닥! 이긴 팀을 선택하세요.</p><div class="teampick">${btns}</div>`);
-    modal.querySelectorAll('.teampick button').forEach(b=>{
-      b.onclick=()=>{closeModal();res(parseInt(b.dataset.id));};});
+      <p id="chkMsg">투닥투닥! 이긴 팀을 선택하세요.</p><div class="teampick" id="chkBtns">${btns}</div>`);
+    modal.querySelectorAll('#chkBtns button').forEach(b=>{
+      b.onclick=()=>{
+        const wid=parseInt(b.dataset.id);const wname=teams.find(t=>t.id===wid).name;
+        modal.querySelectorAll('.fighter').forEach(f=>{
+          f.classList.remove('left','right');
+          f.classList.add(parseInt(f.dataset.id)===wid?'win':'lose');});
+        const clash=modal.querySelector('.clash');if(clash)clash.style.display='none';
+        const msg=document.getElementById('chkMsg');if(msg)msg.innerHTML=`🎉 <b>${wname}</b> 승리!`;
+        const bb=document.getElementById('chkBtns');if(bb)bb.remove();
+        setTimeout(()=>{closeModal();res(wid);},2000);
+      };});
   });
 }
 
