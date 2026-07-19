@@ -11,7 +11,7 @@
     --primary:#5b7cfa; --primary-ink:#ffffff;
     --t-start:#ec4899; --t-mini:#14b8a6; --t-steal:#f43f5e; --t-swap:#8b5cf6;
     --t-chance:#fbbf24; --t-bet:#f97316; --t-island:#64748b; --t-shop:#0ea5e9;
-    --t-donate:#a8b3c2;
+    --t-donate:#a8b3c2; --t-group:#f7b8d2;
     --rainbow:linear-gradient(90deg,#ef4444,#f97316,#fbbf24,#22c55e,#0ea5e9,#8b5cf6);
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -48,7 +48,7 @@
   .team-row input:focus{outline:none;border-color:var(--primary);background:#fff}
   .note{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.5}
 
-  #game{display:none;max-width:1200px;margin:0 auto}
+  #game{display:none;max-width:1680px;margin:0 auto;padding:0 16px}
   .topbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
     background:var(--card);border:1px solid var(--line);border-radius:16px;
     padding:14px 20px;margin-bottom:16px;box-shadow:var(--shadow)}
@@ -57,19 +57,22 @@
   .topbar .turn{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px}
   .topbar .timer{font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px;font-weight:600}
   .topbar .spacer{flex:1}
-  .layout{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
   @media(max-width:920px){.layout{grid-template-columns:1fr}}
 
-  .board{aspect-ratio:1/1;display:grid;grid-template-columns:repeat(6,1fr);
+  .board{display:grid;grid-template-columns:repeat(6,1fr);
     grid-template-rows:repeat(6,1fr);gap:8px;background:#f6f9ff;
+    height:calc(100vh - 132px);min-height:560px;
     border:1px solid var(--line);border-radius:20px;padding:10px;box-shadow:var(--shadow)}
+  @media(max-width:920px){.board{height:auto;aspect-ratio:1/1}}
   .tile{border-radius:14px;padding:8px;display:flex;flex-direction:column;
-    justify-content:space-between;position:relative;min-height:0;overflow:hidden;
+    justify-content:center;align-items:center;position:relative;min-height:0;overflow:hidden;
     box-shadow:0 3px 8px rgba(30,50,90,.12)}
-  .tile .tname{font-size:13px;font-weight:800;line-height:1.15;color:#fff;
-    text-shadow:0 1px 3px rgba(0,0,0,.32)}
+  .tile .tname{font-size:clamp(15px,2vw,30px);font-weight:900;line-height:1.1;color:#fff;
+    text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.4);z-index:1}
   .tile.here{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--primary)}
-  .tokens{display:flex;flex-wrap:wrap;justify-content:center;align-content:flex-end;align-items:flex-end}
+  .tokens{position:absolute;left:0;right:0;bottom:4px;display:flex;flex-wrap:wrap;
+    justify-content:center;align-content:flex-end;align-items:flex-end;z-index:2}
   .token{width:46px;line-height:0;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35)) drop-shadow(0 0 1px #fff);
     margin-left:-16px;transition:transform .12s}
   .token:first-child{margin-left:0}
@@ -238,6 +241,79 @@
   @media(prefers-reduced-motion:reduce){
     .fighter,.fighter.win,.fighter .arm,.clash{animation:none}
   }
+  .dicerow{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line)}
+  .dieval{font-weight:900;font-size:22px;min-width:34px;text-align:center;color:var(--primary);
+    font-variant-numeric:tabular-nums}
+  #ceremony{position:fixed;inset:0;z-index:200;overflow:hidden;cursor:pointer;
+    background:radial-gradient(circle at 50% 26%,#1c2540,#070b16 70%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .cerm-cap{position:absolute;top:19%;left:0;right:0;text-align:center;color:#fff;font-weight:900;
+    font-size:clamp(24px,4vw,48px);text-shadow:0 2px 14px rgba(0,0,0,.7);z-index:4;padding:0 16px}
+  .cerm-banner{position:absolute;top:4%;left:50%;transform:translateX(-50%);z-index:6;
+    background:linear-gradient(180deg,#e11d48,#9f1239);color:#fff;font-weight:900;
+    font-size:clamp(20px,3.2vw,40px);letter-spacing:.01em;padding:16px 46px;border-radius:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);text-shadow:0 2px 6px rgba(0,0,0,.4);white-space:nowrap}
+  .cerm-banner::before,.cerm-banner::after{content:'';position:absolute;top:0;width:26px;height:100%;
+    background:#9f1239}
+  .cerm-banner::before{left:-22px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,40% 50%)}
+  .cerm-banner::after{right:-22px;clip-path:polygon(0 0,100% 0,60% 50%,100% 100%,0 100%)}
+  .cerm-string{position:absolute;top:2%;left:0;right:0;height:3%;z-index:5;
+    background:linear-gradient(180deg,rgba(255,255,255,.25),transparent);pointer-events:none}
+  .stage{position:relative;display:flex;gap:clamp(14px,3vw,54px);align-items:flex-end;
+    padding:40px 40px 0;z-index:2}
+  .stage-floor{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+    width:min(92vw,1100px);height:70px;z-index:0;border-radius:12px 12px 8px 8px;
+    background:linear-gradient(180deg,#7c3f22,#5a2c16);
+    box-shadow:0 -4px 0 #a9613a inset,0 20px 50px rgba(0,0,0,.5)}
+  .stage-skirt{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
+    width:min(96vw,1160px);height:26px;z-index:0;border-radius:0 0 14px 14px;
+    background:repeating-linear-gradient(90deg,#b91c3c 0 26px,#9f1239 26px 52px)}
+  .actor{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;
+    transition:transform .5s,opacity .5s,filter .35s;z-index:2}
+  .actor .figure svg{width:clamp(66px,9vw,128px);height:auto;display:block}
+  .actor.dim{filter:brightness(.26) saturate(.5)}
+  .actor.lit{filter:brightness(1.18) drop-shadow(0 0 24px rgba(255,240,180,.9))}
+  .actor.out{opacity:0;transform:translateY(70px) scale(.65)}
+  .actor.champ{animation:champJump .6s ease-in-out infinite}
+  @keyframes champJump{0%,100%{transform:translateY(0)}42%{transform:translateY(-24px)}}
+  .alabel{color:#fff;font-weight:800;font-size:clamp(13px,1.5vw,19px);opacity:0;transform:translateY(6px);
+    transition:opacity .3s,transform .3s;background:rgba(0,0,0,.45);padding:4px 12px;border-radius:20px;white-space:nowrap}
+  .alabel.show{opacity:1;transform:none}
+  .spot{position:absolute;left:50%;top:50%;width:230px;height:230px;border-radius:50%;pointer-events:none;
+    z-index:1;opacity:0;transform:translate(-50%,-50%);mix-blend-mode:screen;
+    background:radial-gradient(circle,rgba(255,246,205,.6),rgba(255,246,205,.14) 55%,transparent 72%);
+    transition:left .35s ease,top .35s ease,opacity .3s}
+  .cerm-foot{position:absolute;bottom:6%;left:0;right:0;display:flex;flex-direction:column;
+    align-items:center;gap:16px;z-index:7}
+  .scoreboard{background:rgba(255,255,255,.97);border-radius:18px;padding:18px 24px;min-width:300px;
+    box-shadow:0 20px 60px rgba(0,0,0,.45);opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s}
+  .scoreboard.show{opacity:1;transform:none}
+  .scoreboard h4{margin:0 0 12px;text-align:center;font-size:20px;color:var(--ink)}
+  .sbrow{display:flex;align-items:center;gap:12px;padding:8px 6px;border-bottom:1px solid var(--line);font-size:16px}
+  .sbrow:last-child{border-bottom:none}
+  .sbrow .rk{font-weight:900;width:28px;text-align:center;color:var(--primary)}
+  .sbrow .nm{flex:1;font-weight:800;color:var(--ink)}
+  .sbrow .sc{font-weight:900;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .fw{position:absolute;width:8px;height:8px;border-radius:50%;z-index:8;pointer-events:none}
+  .ce-prev{width:130px;height:130px;margin:2px auto 12px;display:flex;align-items:center;justify-content:center;
+    background:#f3f6fc;border:1.5px solid var(--line);border-radius:16px}
+  .ce-prev svg{width:104px;height:auto}
+  .ce-controls{text-align:left;max-height:44vh;overflow:auto;padding-right:4px}
+  .ce-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap}
+  .ce-label{width:60px;font-size:13px;font-weight:800;color:var(--muted);flex:none}
+  .ce-opts{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+  .ce-opt{background:#f1f4fb;border:1.5px solid transparent;border-radius:9px;padding:6px 11px;
+    font-size:13px;font-weight:700;color:var(--ink);cursor:pointer}
+  .ce-opt.on{background:#eaf0ff;border-color:var(--primary);color:var(--primary)}
+  .ce-sw{width:26px;height:26px;border-radius:50%;padding:0;border:2px solid #fff;
+    box-shadow:0 0 0 1.5px var(--line);cursor:pointer}
+  .ce-sw.on{box-shadow:0 0 0 2.5px var(--primary)}
+  .dice-stage{display:flex;align-items:center;justify-content:center;padding:14px 0 6px;cursor:pointer;user-select:none}
+  .die3d{width:88px;height:88px;border-radius:18px;background:#fff;border:2px solid var(--line);
+    box-shadow:0 8px 20px rgba(40,60,110,.16);display:flex;align-items:center;justify-content:center;
+    font-size:46px;font-weight:900;color:var(--ink);font-variant-numeric:tabular-nums}
+  .die3d.shake{animation:diceShake .5s ease-in-out infinite}
+  @keyframes diceShake{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-10px) rotate(8deg)}}
 </style>
 </head>
 <body>
@@ -273,7 +349,7 @@
 <script>
 const TEAM_COLORS=['#ef4444','#3b82f6','#eab308','#a855f7','#10b981'];
 const TEAM_DEFAULT_NAMES=['1팀','2팀','3팀','4팀','5팀'];
-const START_SCORE=1000, PASS_START_BONUS=1000, CHICKEN_STEAL=300;
+const START_SCORE=1000, PASS_START_BONUS=1000, CHICKEN_STEAL=300, GROUP_WIN=1000;
 
 const CARD_DEFS={
   small: {name:'작은 숫자 카드', desc:'내 차례에 사용 → 이동 룰렛이 1~5(각 2칸)으로 바뀐 뒤 굴림 (일회용)'},
@@ -295,9 +371,10 @@ const TILE={
   chance:{name:'찬스',color:'var(--t-chance)'}, bet:{name:'배팅',color:'var(--t-bet)'},
   island:{name:'무인도',color:'var(--t-island)'}, shop:{name:'상점',color:'var(--t-shop)'},
   donate:{name:'기부',color:'var(--t-donate)'},
+  group:{name:'단체게임',color:'var(--t-group)'},
 };
-const BOARD=['start','mini','steal','mini','chance','island','mini','swap','mini','bet',
-             'shop','mini','steal','mini','chance','shop','mini','steal','mini','donate'];
+const BOARD=['start','mini','steal','mini','group','island','mini','swap','mini','bet',
+             'shop','mini','steal','mini','chance','group','mini','steal','mini','donate'];
 const GRID=[[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[2,6],[3,6],[4,6],[5,6],
             [6,6],[6,5],[6,4],[6,3],[6,2],[6,1],[5,1],[4,1],[3,1],[2,1]];
 
@@ -315,8 +392,8 @@ const ROULETTE={
 };
 
 let state=null, clockTimer=null, logLines=[], wheelRotation=0;
-let setupTeams=5, setupTurns=20;
-let setupChars=[0,1,2,3,4,5,6,7];
+let setupTeams=5, setupTurns=10;
+let setupChars=[];
 
 /* 8종 사람 캐릭터 (4여 4남) — 몸통 동일, 눈·입·헤어·헤어색·옷·바지·신발 개성 */
 const CHARACTERS=[
@@ -329,6 +406,7 @@ const CHARACTERS=[
   {g:'m',skin:'#ffdcc0',hair:'#3a6ea5',hs:'sidepart',eye:'sleepy',mouth:'smile',shirt:'#0ea5e9',pants:'#1f2937',shoe:'#22c55e'},
   {g:'f',skin:'#e8b487',hair:'#6b3fa0',hs:'curly',   eye:'big',  mouth:'open', shirt:'#14b8a6',pants:'#7c3aed',shoe:'#f43f5e'},
 ];
+setupChars=[0,1,2,3,4,5,6,7].map(i=>({...CHARACTERS[i],nose:'line',acc:'none'}));
 function hairPath(hs,hc){
   switch(hs){
     case 'short':   return `<path d="M11.5 18Q22 3 32.5 18Q30 10.5 22 9.5Q14 10.5 11.5 18Z" fill="${hc}"/>`;
@@ -365,6 +443,33 @@ function mouthPath(m){
   }
   return '';
 }
+function nosePath(n){const x=22;
+  switch(n){
+    case 'line':  return `<path d="M${x} 21.2v1.6" stroke="rgba(0,0,0,.22)" stroke-width="1" stroke-linecap="round"/>`;
+    case 'dot':   return `<circle cx="${x}" cy="22.2" r="1" fill="rgba(0,0,0,.24)"/>`;
+    case 'button':return `<circle cx="${x}" cy="22.2" r="1.5" fill="#e59e7e"/>`;
+    case 'none':  return '';
+  }
+  return '';
+}
+function accPath(a){
+  switch(a){
+    case 'glasses':    return `<g stroke="#2b3a55" stroke-width="1.2" fill="rgba(255,255,255,.15)"><circle cx="17.5" cy="19" r="3.1"/><circle cx="26.5" cy="19" r="3.1"/></g><path d="M20.6 19h2.8" stroke="#2b3a55" stroke-width="1.2"/>`;
+    case 'sunglasses': return `<g fill="#22303f"><rect x="13.6" y="16.4" width="7.2" height="4.6" rx="2.1"/><rect x="23.2" y="16.4" width="7.2" height="4.6" rx="2.1"/></g><path d="M20.8 18.4h2.4" stroke="#22303f" stroke-width="1.4"/>`;
+    case 'hat':        return `<g><path d="M14 10.5Q22 1 30 10.5Z" fill="#374151"/><rect x="11.5" y="9.6" width="21" height="3.4" rx="1.7" fill="#1f2937"/></g>`;
+    case 'bow':        return `<g fill="#ef4444"><path d="M22 8.5l-5.5 -3v6z"/><path d="M22 8.5l5.5 -3v6z"/><circle cx="22" cy="8.5" r="1.8"/></g>`;
+    case 'none':       return '';
+  }
+  return '';
+}
+const OPT_EYE=[['dots','점눈'],['oval','타원'],['big','큰눈'],['happy','웃는'],['lash','속눈썹'],['sleepy','졸린']];
+const OPT_NOSE=[['line','선'],['dot','점'],['button','동그란'],['none','없음']];
+const OPT_MOUTH=[['smile','미소'],['grin','활짝'],['small','작게'],['open','벌린'],['cat','고양이']];
+const OPT_HAIR=[['short','짧은'],['spiky','뾰족'],['long','긴머리'],['pony','포니'],['buzz','삭발'],['bob','단발'],['sidepart','가르마'],['curly','곱슬']];
+const OPT_ACC=[['none','없음'],['glasses','안경'],['sunglasses','선글'],['hat','모자'],['bow','리본']];
+const PAL_HAIR=['#2b2b2b','#141414','#5c3a21','#a35a25','#e6b800','#c04a6b','#3a6ea5','#6b3fa0','#e5e7eb','#ff6b6b'];
+const PAL_SKIN=['#ffdcc0','#f4c99e','#e8b487','#d69a6a','#a86b43'];
+const PAL_SHIRT=['#ef4444','#ec4899','#f59e0b','#22c55e','#14b8a6','#0ea5e9','#3b82f6','#8b5cf6','#111827','#ffffff'];
 function drawCharacter(c,teamColor,size){
   const s=size||34;
   return `<svg viewBox="0 0 44 58" width="${s}" height="${s*58/44}" xmlns="http://www.w3.org/2000/svg">
@@ -379,9 +484,10 @@ function drawCharacter(c,teamColor,size){
     <circle cx="14.5" cy="23" r="1.8" fill="#ff9aa2" opacity=".45"/>
     <circle cx="29.5" cy="23" r="1.8" fill="#ff9aa2" opacity=".45"/>
     ${eyePath(c.eye)}
-    <path d="M22 21.2v1.4" stroke="rgba(0,0,0,.18)" stroke-width="1" stroke-linecap="round"/>
+    ${nosePath(c.nose||'line')}
     ${mouthPath(c.mouth)}
     ${hairPath(c.hs,c.hair)}
+    ${accPath(c.acc||'none')}
   </svg>`;
 }
 
@@ -394,37 +500,113 @@ function buildSetup(){
   const prevI=[...ti.querySelectorAll('.intro')].map(i=>i.value);ti.innerHTML='';
   for(let i=0;i<setupTeams;i++){const row=document.createElement('div');row.className='team-row';
     row.innerHTML=`<span class="swatch" style="background:${TEAM_COLORS[i]}"></span>
-      <div class="setup-avatar" onclick="pickCharacter(${i})" title="캐릭터 선택">${drawCharacter(CHARACTERS[setupChars[i]],TEAM_COLORS[i],38)}</div>
+      <div class="setup-avatar" onclick="pickCharacter(${i})" title="캐릭터 선택">${drawCharacter(setupChars[i],TEAM_COLORS[i],38)}</div>
       <div class="inputs">
         <input class="nm" maxlength="8" placeholder="팀 이름" value="${prevN[i]??TEAM_DEFAULT_NAMES[i]}">
         <input class="intro" maxlength="20" placeholder="한 줄 소개" value="${prevI[i]??''}">
       </div>`;
     ti.appendChild(row);}
   const tb=document.getElementById('turnBtns');tb.innerHTML='';
-  [10,15,20,25,30].forEach(n=>{const b=document.createElement('button');b.textContent=n+'턴';
+  [5,10,15,20].forEach(n=>{const b=document.createElement('button');b.textContent=n+'턴';
     if(n===setupTurns)b.className='on';b.onclick=()=>{setupTurns=n;buildSetup()};tb.appendChild(b);});
 }
 buildSetup();
 
 function pickCharacter(ti){
-  const grid=CHARACTERS.map((c,ci)=>`<div class="char-opt ${setupChars[ti]===ci?'on':''}" onclick="chooseCharacter(${ti},${ci})">${drawCharacter(c,TEAM_COLORS[ti],40)}</div>`).join('');
-  openModal(`<h3>${ti+1}팀 캐릭터 선택</h3><div class="char-pick">${grid}</div>
-    <div class="mbtns"><button class="btn ghost" onclick="closeModal()">닫기</button></div>`);
+  openCharEditor(setupChars[ti],TEAM_COLORS[ti],`${ti+1}팀 캐릭터 꾸미기`,null,()=>{closeModal();buildSetup();});
 }
-function chooseCharacter(ti,ci){setupChars[ti]=ci;closeModal();buildSetup();}
+function charControlsHTML(obj){
+  const btn=(key,list)=>list.map(([v,label])=>`<button class="ce-opt ${obj[key]===v?'on':''}" data-key="${key}" data-val="${v}">${label}</button>`).join('');
+  const sw=(key,pal)=>pal.map(col=>`<button class="ce-sw ${obj[key]===col?'on':''}" data-key="${key}" data-val="${col}" style="background:${col}"></button>`).join('');
+  return `<div class="ce-controls">
+    <div class="ce-row"><span class="ce-label">눈</span><div class="ce-opts">${btn('eye',OPT_EYE)}</div></div>
+    <div class="ce-row"><span class="ce-label">코</span><div class="ce-opts">${btn('nose',OPT_NOSE)}</div></div>
+    <div class="ce-row"><span class="ce-label">입</span><div class="ce-opts">${btn('mouth',OPT_MOUTH)}</div></div>
+    <div class="ce-row"><span class="ce-label">머리</span><div class="ce-opts">${btn('hs',OPT_HAIR)}</div></div>
+    <div class="ce-row"><span class="ce-label">머리색</span><div class="ce-opts">${sw('hair',PAL_HAIR)}</div></div>
+    <div class="ce-row"><span class="ce-label">피부</span><div class="ce-opts">${sw('skin',PAL_SKIN)}</div></div>
+    <div class="ce-row"><span class="ce-label">옷</span><div class="ce-opts">${sw('shirt',PAL_SHIRT)}</div></div>
+    <div class="ce-row"><span class="ce-label">악세서리</span><div class="ce-opts">${btn('acc',OPT_ACC)}</div></div>
+  </div>`;
+}
+function bindCharEditor(obj,color){
+  const prev=document.getElementById('cePrev');
+  modal.querySelectorAll('.ce-opt,.ce-sw').forEach(b=>{
+    b.onclick=()=>{const k=b.dataset.key,v=b.dataset.val;obj[k]=v;
+      modal.querySelectorAll(`[data-key="${k}"]`).forEach(x=>x.classList.toggle('on',x===b));
+      prev.innerHTML=drawCharacter(obj,color,120);};
+  });
+}
+function openCharEditor(obj,color,title,nameData,onDone){
+  const nameFields=nameData?`<input class="txt" id="edName" maxlength="8" placeholder="팀 이름" value="${(nameData.name||'').replace(/"/g,'&quot;')}">
+    <input class="txt" id="edIntro" maxlength="20" placeholder="한 줄 소개" value="${(nameData.intro||'').replace(/"/g,'&quot;')}">`:'';
+  openModal(`<h3>${title}</h3>
+    <div class="ce-prev" id="cePrev">${drawCharacter(obj,color,120)}</div>
+    ${nameFields}
+    ${charControlsHTML(obj)}
+    <div class="mbtns"><button class="btn" id="ceDone">완료</button></div>`);
+  bindCharEditor(obj,color);
+  document.getElementById('ceDone').onclick=onDone;
+}
+function editProfile(id){
+  const t=state.teams[id];
+  openCharEditor(t.char,t.color,`${t.name} 프로필`,{name:t.name,intro:t.intro},()=>{
+    const nm=(document.getElementById('edName').value||'').trim();
+    const iv=(document.getElementById('edIntro').value||'').trim();
+    if(nm)t.name=nm;t.intro=iv;
+    closeModal();renderSide();if(document.getElementById('turnLabel'))updateTop();
+  });
+}
 
 function startGame(){
   const nm=[...document.querySelectorAll('#teamInputs .nm')].map(i=>i.value.trim());
   const it=[...document.querySelectorAll('#teamInputs .intro')].map(i=>i.value.trim());
-  state={teams:nm.map((name,i)=>({id:i,name:name||TEAM_DEFAULT_NAMES[i],intro:it[i]||'',char:setupChars[i],
-      color:TEAM_COLORS[i],pos:0,score:START_SCORE,delta:0,cards:[],skip:false})),
-    turnIdx:0,turnCount:0,maxTurns:setupTurns,startTime:Date.now(),
+  state={teams:nm.map((name,i)=>({id:i,name:name||TEAM_DEFAULT_NAMES[i],intro:it[i]||'',
+      color:TEAM_COLORS[i],pos:0,score:START_SCORE,delta:0,cards:[],skip:false,dice:null,char:{...setupChars[i]}})),
+    turnIdx:0,round:1,maxTurns:setupTurns,order:[],orderPos:0,startTime:Date.now(),
     chickenActive:true,pendingChicken:null,movingId:null,rerollPending:0,shopN:null};
+  state.order=state.teams.map(t=>t.id);
   document.getElementById('setup').style.display='none';
   document.getElementById('game').style.display='block';
   renderBoard();renderSide();
   clockTimer=setInterval(updateClock,1000);
-  beginTurn();
+  rollForOrder();
+}
+function rollForOrder(){
+  openModal(`<h3>순서 정하기</h3>
+    <p>팀마다 한 번씩 주사위를 던집니다. 숫자가 큰 팀부터 매 턴 이동합니다.</p>
+    <div class="dice-stage" id="diceStage"><div class="die3d" id="die3d">?</div></div>
+    <p id="diceMsg" style="text-align:center;font-weight:800;min-height:22px"></p>
+    <div id="diceList"></div>
+    <div class="mbtns" id="diceBtns"></div>`);
+  const list=()=>{document.getElementById('diceList').innerHTML=state.teams.map(t=>
+    `<div class="dicerow"><span class="pdot" style="width:22px;height:22px;box-shadow:none;background:${t.color}"></span>
+     <span style="flex:1;font-weight:800">${t.name}</span><span class="dieval" id="die${t.id}">${t.dice!=null?t.dice:'–'}</span></div>`).join('');};
+  list();
+  let idx=0,rolling=false;
+  const stage=document.getElementById('diceStage'),die=document.getElementById('die3d'),msg=document.getElementById('diceMsg');
+  function prompt(){msg.innerHTML=`<b>${state.teams[idx].name}</b> 차례입니다. 화면을 클릭해 주사위를 던지세요.`;}
+  prompt();
+  stage.onclick=()=>{
+    if(rolling||idx>=state.teams.length)return;
+    rolling=true;die.classList.add('shake');
+    let ticks=0;const iv=setInterval(()=>{die.textContent=1+Math.floor(Math.random()*6);
+      if(++ticks>=14){clearInterval(iv);
+        const val=1+Math.floor(Math.random()*6);const t=state.teams[idx];t.dice=val;t._tie=Math.random();
+        die.textContent=val;die.classList.remove('shake');list();
+        msg.innerHTML=`${t.name}이(가) <b>${val}</b>이(가) 나왔습니다.`;
+        idx++;rolling=false;
+        if(idx<state.teams.length){setTimeout(prompt,700);}
+        else{
+          state.order=[...state.teams].sort((a,b)=>b.dice-a.dice||b._tie-a._tie).map(t=>t.id);
+          state.orderPos=0;state.turnIdx=state.order[0];renderSide();
+          msg.innerHTML='모든 팀이 주사위를 던졌습니다. 큰 숫자가 나온 팀부터 진행합니다.';
+          document.getElementById('diceBtns').innerHTML='<button class="btn" id="startBtn">게임 시작</button>';
+          document.getElementById('startBtn').onclick=()=>{closeModal();beginTurn();};
+        }
+      }
+    },70);
+  };
 }
 function updateClock(){const s=Math.floor((Date.now()-state.startTime)/1000);
   document.getElementById('clock').textContent=
@@ -463,7 +645,7 @@ function renderBoard(){
     if(cur&&cur.pos===i)el.classList.add('here');
     const here=state.teams.filter(tm=>tm.pos===i);
     el.innerHTML=`<div class="tname">${t.name}</div><div class="tokens">${
-      here.map(tm=>`<span class="token${state.movingId===tm.id?' running':''}">${drawCharacter(CHARACTERS[tm.char],tm.color,44)}</span>`).join('')}</div>`;
+      here.map(tm=>`<span class="token${state.movingId===tm.id?' running':''}">${drawCharacter(tm.char,tm.color,44)}</span>`).join('')}</div>`;
     b.appendChild(el);
   });
   const cc=document.createElement('div');cc.className='center-cell';
@@ -483,58 +665,30 @@ function openLog(){
 
 function renderSide(){
   const s=document.getElementById('side');s.innerHTML='';
-  const sorted=[...state.teams].sort((a,b)=>b.score-a.score);
-  const maxScore=Math.max(...state.teams.map(t=>t.score));
-  const leaderId=state.teams.find(t=>t.score===maxScore).id;
-  sorted.forEach((tm,si)=>{
-    const rank=si+1;const active=tm.id===state.turnIdx;
+  const order=(state.order&&state.order.length)?state.order:state.teams.map(t=>t.id);
+  order.forEach((id,si)=>{
+    const tm=state.teams[id];const active=tm.id===state.turnIdx;
     const el=document.createElement('div');el.className='pcard'+(active?' active':'');
-    let dd='';if(tm.delta){const cl=tm.delta>0?'up':'down';const sg=tm.delta>0?'+':'';
-      dd=`<span class="d ${cl}">${sg}${tm.delta}</span>`;}
     const slots=[0,1,2].map(k=>{const card=tm.cards[k];
       return card?`<div class="slot filled" title="${cardDesc(card)}">${slotLabel(card)}</div>`
                  :`<div class="slot">빈 슬롯</div>`;}).join('');
     const intro=tm.intro?`<div class="pintro">${tm.intro}</div>`:'';
-    const crown=tm.id===leaderId?'👑 ':'';
-    el.innerHTML=`<div class="phead"><span class="char-avatar" style="--ring:${tm.color}">${drawCharacter(CHARACTERS[tm.char],tm.color,34)}</span>
+    const badge=tm.dice!=null?`<span class="prank"> ${tm.dice}</span>`:`<span class="prank">${si+1}번</span>`;
+    el.innerHTML=`<div class="phead"><span class="char-avatar" style="--ring:${tm.color}">${drawCharacter(tm.char,tm.color,34)}</span>
         <div class="pname-wrap">
-          <div class="pname">${crown}${tm.name}
+          <div class="pname">${tm.name}
             <button class="edit-btn" onclick="editProfile(${tm.id})">편집</button></div>
           ${intro}
         </div>
-        <span class="prank">${rank}위</span></div>
-      <div class="pscore${tm.score<0?' neg':''}">${tm.score.toLocaleString()}점 ${dd}</div>
+        ${badge}</div>
       <div class="slots">${slots}</div>`;
     s.appendChild(el);
   });
 }
-function editProfile(id){
-  const t=state.teams[id];
-  const grid=CHARACTERS.map((c,ci)=>`<div class="char-opt ${t.char===ci?'on':''}" onclick="setTeamChar(${id},${ci})">${drawCharacter(c,t.color,40)}</div>`).join('');
-  openModal(`<h3>${t.name} 프로필 편집</h3>
-    <div class="char-pick">${grid}</div>
-    <input class="txt" id="edName" maxlength="8" placeholder="팀 이름" value="${t.name.replace(/"/g,'&quot;')}">
-    <input class="txt" id="edIntro" maxlength="20" placeholder="한 줄 소개" value="${(t.intro||'').replace(/"/g,'&quot;')}">
-    <div class="mbtns row"><button class="btn" onclick="saveProfile(${id})">저장</button>
-      <button class="btn ghost" onclick="closeModal()">취소</button></div>`);
-}
-function setTeamChar(id,ci){
-  const nm=document.getElementById('edName').value,iv=document.getElementById('edIntro').value;
-  state.teams[id].char=ci;renderSide();editProfile(id);
-  document.getElementById('edName').value=nm;document.getElementById('edIntro').value=iv;
-}
-function saveProfile(id){
-  const t=state.teams[id];
-  const nm=document.getElementById('edName').value.trim();
-  const iv=document.getElementById('edIntro').value.trim();
-  if(nm)t.name=nm;t.intro=iv;
-  closeModal();renderSide();updateTop();
-}
-
 function updateTop(){const cur=state.teams[state.turnIdx];
   document.getElementById('turnLabel').innerHTML=
     `<span class="pdot" style="display:inline-block;width:18px;height:18px;box-shadow:none;vertical-align:-3px;background:${cur.color}"></span> ${cur.name} 차례`;
-  document.getElementById('turnCounter').textContent=`${state.turnCount}/${state.maxTurns}`;}
+  document.getElementById('turnCounter').textContent=`${state.round}/${state.maxTurns}`;}
 
 function setAction(msg,btns){
   document.getElementById('actionMsg').innerHTML=msg;
@@ -549,7 +703,7 @@ function beginTurn(){
   state.teams.forEach(t=>t.delta=0);
   renderBoard();renderSide();updateTop();
   if(cur.skip){cur.skip=false;
-    log(`⏸ ${cur.name} 이번 턴 휴식`);
+    log(` ${cur.name} 이번 턴 휴식`);
     setAction(`<b>${cur.name}</b>은(는) 이번 턴을 쉽니다.`,[{label:'다음 팀',fn:endTurn}]);
     renderSide();return;}
   showMoveOptions();
@@ -586,8 +740,8 @@ async function useSkipCard(){
   const target=await chooseTeam('다음 턴을 쉬게 할 팀 선택',state.teams.filter(t=>t.id!==cur.id));
   if(target==null){showMoveOptions();return;}
   const tt=state.teams[target];removeCard(cur,'skip');
-  if(await tryShield(tt,'턴 스킵')){log(`🛡 ${tt.name} 쉴드로 방어`);showMoveOptions();return;}
-  tt.skip=true;log(`⏸ ${tt.name} 다음 턴 쉬기 (카드)`);eventFlash(`${tt.name} 다음 턴 쉬기!`);renderSide();
+  if(await tryShield(tt,'턴 스킵')){log(` ${tt.name} 쉴드로 방어`);showMoveOptions();return;}
+  tt.skip=true;log(` ${tt.name} 다음 턴 쉬기 (카드)`);eventFlash(`${cur.name}이(가) ${tt.name}을(를) 다음 턴 쉬게 했다`);renderSide();
   showMoveOptions();
 }
 
@@ -602,10 +756,10 @@ async function useRobCard(){
   const pick=await chooseCard('뺏을 카드 선택',opts);
   if(pick==null){showMoveOptions();return;}
   const tt=state.teams[opts[pick].tid];removeCard(cur,'rob');
-  if(await tryShield(tt,'카드 뺏기')){log(`🛡 ${tt.name} 쉴드로 방어`);showMoveOptions();return;}
+  if(await tryShield(tt,'카드 뺏기')){log(` ${tt.name} 쉴드로 방어`);showMoveOptions();return;}
   const got=tt.cards.splice(opts[pick].ci,1)[0];
-  log(`🃏 ${cur.name}이(가) ${tt.name}의 [${cardName(got)}] 뺏음`);
-  eventFlash(`${tt.name}의 [${cardName(got)}] 카드를 뺏었다!`);
+  log(` ${cur.name}이(가) ${tt.name}의 [${cardName(got)}] 뺏음`);
+  eventFlash(`${cur.name}이(가) ${tt.name}의 [${cardName(got)}] 카드를 뺏었다`);
   await gainCard(cur,got);
   showMoveOptions();
 }
@@ -623,22 +777,23 @@ async function doMove(moveCard){
   else{const idx=Math.floor(Math.random()*10);steps=parseInt(ROULETTE.move[idx]);
     await spin('이동 룰렛',ROULETTE.move,idx);}
   const before=cur.pos;const after=(before+steps)%20;
-  log(`🎲 ${cur.name} ${steps}칸 → ${TILE[BOARD[after]].name}`);
+  log(` ${cur.name} ${steps}칸 → ${TILE[BOARD[after]].name}`);
   state.movingId=cur.id;
   for(let k=1;k<=steps;k++){cur.pos=(before+k)%20;renderBoard();renderSide();await sleep(300);}
   state.movingId=null;
   if(before+steps>=20){
     state.chickenActive=true;
     addScore(cur,PASS_START_BONUS,'출발 통과');
-    log(`🏁 출발지 보너스 ${cur.name} +${PASS_START_BONUS}점`);
-    eventFlash(`출발 보너스를 받았다! +${PASS_START_BONUS}점`);
+    log(` 출발지 보너스 ${cur.name} +${PASS_START_BONUS}점`);
+    renderBoard();renderSide();
+    await showTileName(`출발 보너스! +${PASS_START_BONUS}점`);
   }
   // 이동 시 20% 확률로 카드 줍기
   if(Math.random()<0.2){
     const pool=['small','rob','chicken','shield','big'];
     const got=pool[Math.floor(Math.random()*pool.length)];
-    log(`🍀 ${cur.name} 카드 획득: ${cardName(got)}`);
-    eventFlash(`럭키! [${cardName(got)}] 카드를 주웠다!`);
+    log(` ${cur.name} 카드 획득: ${cardName(got)}`);
+    eventFlash(`${cur.name}이(가) [${cardName(got)}] 카드를 주웠다`);
     await gainCard(cur,got);
   }
   renderBoard();renderSide();
@@ -652,86 +807,99 @@ async function doMove(moveCard){
 
 async function resolveTile(pos){
   const type=BOARD[pos];const cur=state.teams[state.turnIdx];
-  if(type==='start')setAction(`🏁 출발 칸! 기본 점수가 정산되었습니다.`,[{label:'턴 종료',fn:endTurn}]);
+  if(type==='start')setAction(`${cur.name}이(가) 출발 칸에 도착했다.`,[{label:'턴 종료',fn:endTurn}]);
   else if(type==='mini')resolveMini();
   else if(type==='steal')miniGate('강탈',resolveSteal);
   else if(type==='swap')miniGate('교환',resolveSwap);
   else if(type==='chance')miniGate('찬스',resolveChance);
   else if(type==='bet')miniGate('배팅',resolveBet);
   else if(type==='island'){cur.skip=true;
-    eventFlash('무인도에 갇혔다 ㅜ.ㅜ');
-    setAction(`🏝 무인도 도착! ${cur.name}은(는) 다음 턴을 쉽니다.`,[{label:'턴 종료',fn:endTurn}]);}
+    eventFlash(`${cur.name}이(가) 무인도에 갇혔다`);
+    setAction(`${cur.name}이(가) 무인도에 갇혀 다음 턴을 쉽니다.`,[{label:'턴 종료',fn:endTurn}]);}
   else if(type==='shop')openShop();
   else if(type==='donate')resolveDonate();
+  else if(type==='group')resolveGroup();
+}
+async function resolveGroup(){
+  const cur=state.teams[state.turnIdx];
+  eventFlash('단체게임! 4팀 모두 대결');
+  setAction(`단체게임 칸! 모든 팀이 함께 단체게임을 합니다. 진행자가 이긴 팀을 선택하세요.`,[]);
+  const w=await chooseTeam('단체게임에서 이긴 팀 선택',state.teams);
+  if(w==null){endTurn();return;}
+  const win=state.teams[w];
+  addScore(win,GROUP_WIN,'단체게임 승');
+  log(` 단체게임 승자 ${win.name} (+${GROUP_WIN})`);
+  eventFlash(`${win.name}이(가) 단체게임에서 이겨 ${GROUP_WIN}점을 얻었다`);
+  setAction(`단체게임에서 <b>${win.name}</b>이(가) 이겨 <b>${GROUP_WIN}점</b>을 획득했습니다!`,[{label:'턴 종료',fn:endTurn}]);
 }
 async function resolveDonate(){
   const cur=state.teams[state.turnIdx];
-  setAction(`🎁 <b>기부</b> 칸! 500점을 기부할 팀을 지목하세요. (쉴드로 막을 수 없음)`,[]);
+  setAction(`기부 칸! 500점을 기부할 팀을 지목하세요. (쉴드로 막을 수 없음)`,[]);
   const target=await chooseTeam('500점을 기부할 팀 선택',state.teams.filter(t=>t.id!==cur.id));
   if(target==null){endTurn();return;}
   const tt=state.teams[target];
   addScore(cur,-500,'기부');addScore(tt,500,'기부받음');
-  log(`🎁 ${cur.name} → ${tt.name} 500점 기부`);
-  eventFlash(`${tt.name}에게 500점을 기부했다!`);
+  log(` ${cur.name} → ${tt.name} 500점 기부`);
+  eventFlash(`${cur.name}이(가) ${tt.name}에게 500점을 기부했다`);
   setAction(`${cur.name}이(가) <b>${tt.name}</b>에게 500점을 기부했습니다.`,[{label:'턴 종료',fn:endTurn}]);
 }
 
 function resolveMini(){
   const cur=state.teams[state.turnIdx];
-  setAction(`🎮 <b>미니게임</b> 칸! ${cur.name}이(가) 미니게임을 진행합니다. 진행자가 결과를 선택하세요.`,
+  setAction(`미니게임 칸! ${cur.name}이(가) 미니게임을 진행합니다. 진행자가 결과를 선택하세요.`,
    [{label:'성공',fn:async()=>{const idx=Math.floor(Math.random()*10);const pts=ROULETTE.miniPts[idx];
        await spin('획득 점수',ROULETTE.miniPts.map(String),idx);addScore(cur,pts,'미니게임 성공');
-       eventFlash(`야호~! 미니게임에서 승리하였다! +${pts}점`);endTurn();}},
+       eventFlash(`${cur.name}이(가) 미니게임에 성공해 ${pts}점을 얻었다`);endTurn();}},
     {label:'실패 (+300)',sec:true,fn:()=>{addScore(cur,300,'미니게임 실패');
-       eventFlash('미니게임 실패 +300점');endTurn();}}]);
+       eventFlash(`${cur.name}이(가) 미니게임에 실패해 300점을 얻었다`);endTurn();}}]);
 }
 function miniGate(name,successFn){
   const cur=state.teams[state.turnIdx];
-  setAction(`🎮 <b>${name}</b> 칸! ${cur.name}이(가) 미니게임을 진행합니다. 진행자가 결과를 선택하세요.`,
+  setAction(`${name} 칸! ${cur.name}이(가) 미니게임을 진행합니다. 진행자가 결과를 선택하세요.`,
    [{label:'성공',fn:successFn},
     {label:'실패 (+300)',sec:true,fn:()=>{addScore(cur,300,name+' 실패');
-       eventFlash(`${name} 미니게임 실패 +300점`);endTurn();}}]);
+       eventFlash(`${cur.name}이(가) ${name} 미니게임에 실패해 300점을 얻었다`);endTurn();}}]);
 }
 
 async function resolveSteal(){
   const cur=state.teams[state.turnIdx];
-  setAction(`💰 <b>강탈</b> 칸! 점수를 뺏을 팀을 지목하세요.`,[]);
+  setAction(`강탈 칸! ${cur.name}이(가) 점수를 뺏을 팀을 지목하세요.`,[]);
   const target=await chooseTeam('점수를 뺏을 팀 선택',state.teams.filter(t=>t.id!==cur.id));
   if(target==null){endTurn();return;}
   const tt=state.teams[target];
   const idx=Math.floor(Math.random()*10);const pts=ROULETTE.stealPts[idx];
   await spin('강탈 점수 룰렛',ROULETTE.stealPts.map(String),idx);
-  if(await tryShield(tt,'점수 강탈')){log(`🛡 ${tt.name} 쉴드로 방어`);endTurn();return;}
+  if(await tryShield(tt,'점수 강탈')){log(` ${tt.name} 쉴드로 방어`);endTurn();return;}
   addScore(tt,-pts,'강탈당함');addScore(cur,pts,'강탈');
-  log(`💰 ${cur.name}이(가) ${tt.name}에게서 ${pts}점 강탈`);
-  eventFlash(`${tt.name}의 점수 ${pts}점을 빼앗았다!`);
-  setAction(`${cur.name}이(가) <b>${tt.name}</b>의 ${pts}점을 가져왔습니다.`,[{label:'턴 종료',fn:endTurn}]);
+  log(` ${cur.name}이(가) ${tt.name}에게서 ${pts}점 강탈`);
+  eventFlash(`${cur.name}이(가) ${tt.name}의 ${pts}점을 강탈했다`);
+  setAction(`${cur.name}이(가) ${tt.name}의 ${pts}점을 강탈했습니다.`,[{label:'턴 종료',fn:endTurn}]);
 }
 
 async function resolveSwap(){
   const cur=state.teams[state.turnIdx];
-  setAction(`🔄 <b>교환</b> 칸! 점수를 맞바꿀 팀을 지목하세요.`,[]);
+  setAction(`교환 칸! ${cur.name}이(가) 점수를 맞바꿀 팀을 지목하세요.`,[]);
   const target=await chooseTeam('점수를 맞바꿀 팀 선택',state.teams.filter(t=>t.id!==cur.id));
   if(target==null){endTurn();return;}
   const tt=state.teams[target];
-  if(await tryShield(tt,'점수 교환')){log(`🛡 ${tt.name} 쉴드로 방어`);endTurn();return;}
+  if(await tryShield(tt,'점수 교환')){log(` ${tt.name} 쉴드로 방어`);endTurn();return;}
   const a=cur.score,b=tt.score;cur.score=b;tt.score=a;cur.delta=b-a;tt.delta=a-b;
-  log(`🔄 ${cur.name}(${a}) ↔ ${tt.name}(${b}) 교환`);renderSide();
-  eventFlash(`${tt.name}과(와) 점수를 맞바꿨다!`);
-  setAction(`${cur.name} ⟷ ${tt.name} 점수를 맞바꿨습니다.`,[{label:'턴 종료',fn:endTurn}]);
+  log(` ${cur.name}(${a}) ↔ ${tt.name}(${b}) 교환`);renderSide();
+  eventFlash(`${cur.name}이(가) ${tt.name}과(와) 점수를 통째로 맞바꿨다`);
+  setAction(`${cur.name}이(가) ${tt.name}과(와) 점수를 통째로 맞바꿨습니다.`,[{label:'턴 종료',fn:endTurn}]);
 }
 
 async function resolveChance(){
   const cur=state.teams[state.turnIdx];
   const idx=Math.floor(Math.random()*10);const outcome=ROULETTE.chance[idx];
-  setAction(`🎁 <b>찬스</b> 칸! 찬스 룰렛을 돌립니다.`,[]);
-  await spin('찬스 룰렛',ROULETTE.chance,idx);log(`🎁 ${cur.name} 찬스: ${outcome}`);
+  setAction(`찬스 칸! ${cur.name}이(가) 찬스 룰렛을 돌립니다.`,[]);
+  await spin('찬스 룰렛',ROULETTE.chance,idx);log(` ${cur.name} 찬스: ${outcome}`);
   if(outcome==='주사위 한 번 더'){
     eventFlash('주사위 한 번 더 카드 획득!');await gainCard(cur,'reroll');
-    setAction(`🎁 찬스: <b>주사위 한 번 더</b> 카드! (내 차례에 사용)`,[{label:'턴 종료',fn:endTurn}]);
+    setAction(`${cur.name}이(가) 찬스로 주사위 한 번 더 카드를 얻었습니다. (내 차례에 사용)`,[{label:'턴 종료',fn:endTurn}]);
   }else if(outcome==='지목 다음 턴 쉬기'){
     eventFlash('지목 다음 턴 쉬기 카드 획득!');await gainCard(cur,'skip');
-    setAction(`🎁 찬스: <b>지목 다음 턴 쉬기</b> 카드! (내 차례에 사용)`,[{label:'턴 종료',fn:endTurn}]);
+    setAction(`${cur.name}이(가) 찬스로 지목 다음 턴 쉬기 카드를 얻었습니다. (내 차례에 사용)`,[{label:'턴 종료',fn:endTurn}]);
   }else{await chanceGiveTake();}
 }
 async function chanceGiveTake(){
@@ -758,16 +926,16 @@ async function chanceGiveTake(){
     '<div class="mbtns"><button class="btn" id="cgOk">확인</button></div>';
     document.getElementById('cgOk').onclick=r;});
   closeModal();
-  log(`🎁 ${cur.name} → ${who.name}에게 ${pts}점 ${gt}`);
+  log(` ${cur.name} → ${who.name}에게 ${pts}점 ${gt}`);
   if(gt==='받는다'){
-    if(await tryShield(who,'점수 뺏김')){log(`🛡 ${who.name} 쉴드로 방어`);endTurn();return;}
+    if(await tryShield(who,'점수 뺏김')){log(` ${who.name} 쉴드로 방어`);endTurn();return;}
     addScore(who,-pts,'뺏김');addScore(cur,pts,'받음');
-    eventFlash(`${who.name}에게서 ${pts}점을 받았다!`);
+    eventFlash(`${cur.name}이(가) ${who.name}에게서 ${pts}점을 받았다`);
     setAction(`${cur.name}이(가) <b>${who.name}</b>에게서 ${pts}점을 받았습니다.`,[{label:'턴 종료',fn:endTurn}]);
   }else{
-    if(await tryShield(cur,'점수 주기')){log(`🛡 ${cur.name} 쉴드로 방어`);eventFlash(`${cur.name} 쉴드로 방어!`);endTurn();return;}
+    if(await tryShield(cur,'점수 주기')){log(` ${cur.name} 쉴드로 방어`);eventFlash(`${cur.name}이(가) 쉴드로 막았다`);endTurn();return;}
     addScore(cur,-pts,'줌');addScore(who,pts,'받음');
-    eventFlash(`${who.name}에게 ${pts}점을 주었다!`);
+    eventFlash(`${cur.name}이(가) ${who.name}에게 ${pts}점을 주었다`);
     setAction(`${cur.name}이(가) <b>${who.name}</b>에게 ${pts}점을 주었습니다.`,[{label:'턴 종료',fn:endTurn}]);}
 }
 function cgSpin(labels,winIndex){
@@ -780,7 +948,7 @@ function cgSpin(labels,winIndex){
     document.getElementById('cgSpinBtn').onclick=()=>{
       bw.innerHTML='';
       animateNeedle(document.getElementById('cgNeedle'),winIndex,108).then(()=>{
-        if(rd)rd.textContent='결과 ➡ '+labels[winIndex];
+        if(rd)rd.textContent='결과  '+labels[winIndex];
         setTimeout(res,900);
       });
     };
@@ -803,15 +971,15 @@ function startBet(){
   let amt=parseInt(document.getElementById('betAmt').value)||200;
   amt=Math.max(200,Math.min(amt,maxBet));
   closeModal();
-  setAction(`🎰 <b>배팅</b> ${amt}점! ${cur.name}이(가) 미니게임을 진행합니다.`,
+  setAction(`${cur.name}이(가) ${amt}점을 걸고 배팅 미니게임을 진행합니다.`,
    [{label:'승리',fn:async()=>{const idx=Math.floor(Math.random()*10);const m=ROULETTE.betMult[idx];
        await spin('배율 룰렛',ROULETTE.betMult.map(x=>x+'배'),idx);
        const back=Math.round(amt*m);const net=back-amt;
        addScore(cur,net,`배팅 x${m}`);
-       eventFlash(`배팅 ${m}배! ${net>=0?'+':''}${net}점`);
-       setAction(`🎰 배율 <b>${m}배</b>! 건 ${amt}점 → ${back}점 회수 (${net>=0?'+':''}${net})`,[{label:'턴 종료',fn:endTurn}]);}},
+       eventFlash(`${cur.name}이(가) 배팅에 성공해 ${net>=0?'+':''}${net}점을 얻었다`);
+       setAction(`${cur.name}이(가) 배율 ${m}배로 ${amt}점을 걸어 ${back}점을 회수했습니다 (${net>=0?'+':''}${net}).`,[{label:'턴 종료',fn:endTurn}]);}},
     {label:'패배',sec:true,fn:()=>{addScore(cur,-amt,'배팅 패배');
-       eventFlash(`배팅 실패… -${amt}점 ㅜ.ㅜ`);endTurn();}}]);
+       eventFlash(`${cur.name}이(가) 배팅에 실패해 ${amt}점을 잃었다`);endTurn();}}]);
 }
 
 function openShop(){
@@ -839,8 +1007,8 @@ async function buyCard(key,price){const cur=state.teams[state.turnIdx];
     cur.cards.splice(pick,1);
   }
   cur.score-=price;cur.delta=(cur.delta||0)-price;cur.cards.push(key);
-  log(`🛒 ${cur.name} [${cardName(key)}] 구매 (-${price})`);
-  eventFlash(`[${cardName(key)}] 카드를 얻었다!`);renderSide();openShop();}
+  log(` ${cur.name} [${cardName(key)}] 구매 (-${price})`);
+  eventFlash(`${cur.name}이(가) [${cardName(key)}] 카드를 구매했다`);renderSide();openShop();}
 function chooseCard(title,opts){return new Promise(res=>{
   const btns=opts.map((o,i)=>`<button data-i="${i}"><span class="pdot" style="background:${o.color};width:20px;height:20px;box-shadow:none"></span>
     <span style="flex:1">${o.label}</span></button>`).join('');
@@ -859,7 +1027,7 @@ async function gainCard(team,card){
   const pick=await chooseDiscard(`슬롯이 가득 찼습니다. [${cardName(card)}]을(를) 넣으려면 버릴 카드를 고르세요.`,opts);
   if(pick===-1){log(`🗑 ${team.name} 새 카드 [${cardName(card)}] 버림`);return;}
   const removed=team.cards.splice(pick,1)[0];team.cards.push(card);renderSide();
-  log(`🔄 ${team.name} [${cardName(removed)}] 버리고 [${cardName(card)}] 획득`);
+  log(` ${team.name} [${cardName(removed)}] 버리고 [${cardName(card)}] 획득`);
 }
 
 /* 치킨게임: 걸린 칸 기능 수행 후 endTurn에서 발동 */
@@ -869,8 +1037,8 @@ async function runChicken(teams){
   if(winner==null)return;
   const w=state.teams[winner];const losers=teams.filter(t=>t.id!==w.id);let total=0;
   losers.forEach(l=>{addScore(l,-CHICKEN_STEAL,'치킨게임 패');total+=CHICKEN_STEAL;});
-  addScore(w,total,'치킨게임 승');log(`🐔 치킨게임 승자 ${w.name} (+${total})`);renderSide();
-  eventFlash(`치킨게임 승리! ${w.name} +${total}점`);
+  addScore(w,total,'치킨게임 승');log(` 치킨게임 승자 ${w.name} (+${total})`);renderSide();
+  eventFlash(`${w.name}이(가) 치킨게임에서 이겨 ${total}점을 얻었다`);
 }
 function chickenBattle(title,teams){
   return new Promise(res=>{
@@ -895,9 +1063,10 @@ function chickenBattle(title,teams){
           f.classList.remove('left','right');
           f.classList.add(parseInt(f.dataset.id)===wid?'win':'lose');});
         const clash=modal.querySelector('.clash');if(clash)clash.style.display='none';
-        const msg=document.getElementById('chkMsg');if(msg)msg.innerHTML=`🎉 <b>${wname}</b> 승리!`;
+        const msg=document.getElementById('chkMsg');if(msg)msg.innerHTML=`${wname} 승리! 화면을 클릭하면 계속합니다.`;
         const bb=document.getElementById('chkBtns');if(bb)bb.remove();
-        setTimeout(()=>{closeModal();res(wid);},2000);
+        const cont=()=>{overlay.removeEventListener('click',cont);closeModal();res(wid);};
+        setTimeout(()=>overlay.addEventListener('click',cont),60);
       };});
   });
 }
@@ -922,10 +1091,13 @@ async function endTurn(){
       [{label:'이동 룰렛 돌리기',fn:()=>doMove(null)}]);
     return;
   }
-  state.turnCount++;
-  document.getElementById('turnCounter').textContent=`${state.turnCount}/${state.maxTurns}`;
-  if(state.turnCount>=state.maxTurns)return gameOver('턴 종료');
-  state.turnIdx=(state.turnIdx+1)%state.teams.length;
+  state.orderPos++;
+  if(state.orderPos>=state.order.length){
+    state.orderPos=0;
+    if(state.round>=state.maxTurns)return gameOver('턴 종료');
+    state.round++;
+  }
+  state.turnIdx=state.order[state.orderPos];
   beginTurn();
 }
 function endGameNow(){
@@ -934,18 +1106,88 @@ function endGameNow(){
 }
 function gameOver(reason){
   if(clockTimer){clearInterval(clockTimer);clockTimer=null;}
-  const sorted=[...state.teams].sort((a,b)=>b.score-a.score);
-  const champ=sorted[0];const medal=['🥇','🥈','🥉','4위','5위'];
-  const rows=sorted.map((t,i)=>`<div class="rankrow">
-     <span style="font-size:19px;width:36px;text-align:center">${medal[i]}</span>
-     <span class="pdot" style="width:24px;height:24px;box-shadow:none;background:${t.color}"></span>
-     <span style="flex:1;font-weight:800">${t.name}</span>
-     <span style="font-weight:900${t.score<0?';color:#e11d48':''}">${t.score.toLocaleString()}점</span></div>`).join('');
-  openModal(`<div class="win-trophy">🏆</div>
-    <div class="win-name">우승 · ${champ.name}</div>
-    <p>${reason} · 최종 순위</p>
-    <div style="text-align:left;margin-bottom:16px">${rows}</div>
-    <div class="mbtns"><button class="btn" onclick="location.reload()">새 게임</button></div>`);
+  const ranked=[...state.teams].sort((a,b)=>b.score-a.score); // 1등..꼴찌
+  startCeremony(ranked);
+}
+function startCeremony(ranked){
+  const n=ranked.length;
+  const visual=[...ranked].sort(()=>Math.random()-0.5); // 무대 배치는 섞어서 긴장감
+  const actorsHtml=visual.map(t=>`<div class="actor dim" data-id="${t.id}">
+     <div class="figure">${drawCharacter(t.char,t.color,110)}</div>
+     <div class="alabel" id="alab${t.id}"></div></div>`).join('');
+  const cer=document.createElement('div');cer.id='ceremony';
+  cer.innerHTML=`<div class="cerm-string"></div>
+    <div class="cerm-banner">제1회 링크 마블 순위 발표회</div>
+    <div class="cerm-cap" id="cermCap"></div>
+    <div class="stage" id="stage"><div class="stage-floor"></div><div class="stage-skirt"></div>
+      <div class="spot" id="spot"></div>${actorsHtml}</div>
+    <div class="cerm-foot" id="cermFoot"></div>`;
+  document.body.appendChild(cer);
+  const spot=cer.querySelector('#spot');let step=0,busy=false,done=false,phase='idle',roam=null;
+  function centerOf(el){const s=cer.querySelector('#stage').getBoundingClientRect();
+    const r=el.getBoundingClientRect();return {x:r.left-s.left+r.width/2,y:r.top-s.top+r.height/2};}
+  function moveSpot(el){const c=centerOf(el);spot.style.left=c.x+'px';spot.style.top=c.y+'px';spot.style.opacity='1';
+    cer.querySelectorAll('.actor').forEach(a=>a.classList.remove('lit'));el.classList.add('lit');}
+  function remaining(){return [...cer.querySelectorAll('.actor')].filter(a=>!a.classList.contains('out'));}
+  function showScoreboard(){
+    const rows=ranked.map((t,i)=>`<div class="sbrow"><span class="rk">${i+1}</span>
+      <span class="pdot" style="width:20px;height:20px;box-shadow:none;background:${t.color}"></span>
+      <span class="nm">${t.name}</span><span class="sc">${t.score.toLocaleString()}점</span></div>`).join('');
+    const foot=document.getElementById('cermFoot');
+    foot.innerHTML=`<div class="scoreboard" id="sb"><h4>최종 점수</h4>${rows}</div>
+      <button class="btn" onclick="location.reload()">새 게임</button>`;
+    requestAnimationFrame(()=>document.getElementById('sb').classList.add('show'));
+  }
+  function startRoam(){
+    phase='roam';const place=n-step;const rem=remaining();
+    document.getElementById('cermCap').innerHTML=place>1?`${place}등은 누구일까요`:`대망의 1등은 누구일까요`;
+    roam=setInterval(()=>{moveSpot(rem[Math.floor(Math.random()*rem.length)]);},place<=2?220:200);
+  }
+  async function settle(){
+    busy=true;clearInterval(roam);roam=null;
+    const place=n-step;const target=ranked[n-1-step];
+    const tEl=cer.querySelector(`.actor[data-id="${target.id}"]`);
+    moveSpot(tEl);await sleep(650);
+    const lab=document.getElementById('alab'+target.id);lab.textContent=`${place}등 ${target.name}`;lab.classList.add('show');
+    if(place>1){
+      document.getElementById('cermCap').innerHTML=`${place}등 ${target.name}`;
+      await sleep(1100);tEl.classList.add('out');spot.style.opacity='0';await sleep(500);
+      step++;phase='idle';busy=false;
+    }else{
+      document.getElementById('cermCap').innerHTML=`우승 ${target.name}`;
+      tEl.classList.remove('dim');tEl.classList.add('lit','champ');
+      launchFireworks(cer);step++;phase='idle';busy=false;done=true;
+      setTimeout(showScoreboard,1700);
+    }
+  }
+  cer.onclick=()=>{
+    if(busy)return;
+    if(done)return;
+    if(step>=n)return;
+    if(phase==='idle')startRoam();
+    else if(phase==='roam')settle();
+  };
+}
+function launchFireworks(root){
+  const colors=['#ff5252','#ffd54f','#69f0ae','#40c4ff','#e040fb','#ff9800','#fff'];
+  let bursts=0;
+  const boom=()=>{
+    const x=10+Math.random()*80, y=12+Math.random()*45; // vw / vh
+    const col=colors[Math.floor(Math.random()*colors.length)];
+    for(let i=0;i<26;i++){
+      const p=document.createElement('div');p.className='fw';
+      p.style.left=x+'vw';p.style.top=y+'vh';p.style.background=col;
+      root.appendChild(p);
+      const ang=(Math.PI*2*i)/26, dist=60+Math.random()*90;
+      const dx=Math.cos(ang)*dist, dy=Math.sin(ang)*dist;
+      p.animate([{transform:'translate(0,0)',opacity:1},
+                 {transform:`translate(${dx}px,${dy}px)`,opacity:0}],
+                {duration:900+Math.random()*500,easing:'cubic-bezier(.2,.7,.2,1)'});
+      setTimeout(()=>p.remove(),1500);
+    }
+    if(++bursts<14)setTimeout(boom,420+Math.random()*350);
+  };
+  boom();
 }
 
 const overlay=document.getElementById('overlay'),modal=document.getElementById('modal');
@@ -961,8 +1203,7 @@ function confirmBox(title,msg){return new Promise(res=>{
   document.getElementById('nb').onclick=()=>{closeModal();res(false);};});}
 function chooseTeam(title,teams){return new Promise(res=>{
   const btns=teams.map(t=>`<button data-id="${t.id}"><span class="pdot" style="background:${t.color}"></span>
-    <span style="flex:1">${t.name}</span>
-    <span style="color:var(--muted);font-size:12px">${t.score.toLocaleString()}점</span></button>`).join('');
+    <span style="flex:1">${t.name}</span></button>`).join('');
   openModal(`<h3>${title}</h3><div class="teampick">${btns}</div>`);
   modal.querySelectorAll('.teampick button').forEach(b=>{
     b.onclick=()=>{closeModal();res(parseInt(b.dataset.id));};});});}
@@ -1004,7 +1245,7 @@ function spin(title,labels,winIndex){
       <div class="wheelwrap">${wheelSVG(labels)}<div class="needle" id="needle"></div><div class="hub"></div></div>
       <div class="result" id="wheelRes"></div>`);
     animateNeedle(document.getElementById('needle'),winIndex).then(()=>{
-      document.getElementById('wheelRes').textContent='결과 ➡ '+labels[winIndex];
+      document.getElementById('wheelRes').textContent='결과  '+labels[winIndex];
       setTimeout(()=>{closeModal();res(labels[winIndex]);},1100);
     });
   });
