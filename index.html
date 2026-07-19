@@ -276,6 +276,15 @@
   .actor.out{opacity:0;transform:translateY(70px) scale(.65)}
   .actor.champ{animation:champJump .6s ease-in-out infinite}
   @keyframes champJump{0%,100%{transform:translateY(0)}42%{transform:translateY(-24px)}}
+  .actor.cry{filter:brightness(.72) saturate(.85);opacity:1}
+  .actor.cry .figure{position:relative;transform-origin:bottom center;animation:sob 1.2s ease-in-out infinite}
+  @keyframes sob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(4px) scale(.97)}}
+  .actor.cry .figure::before,.actor.cry .figure::after{content:'';position:absolute;top:32%;width:6px;height:10px;
+    background:#5db4ff;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;opacity:.9;z-index:3;
+    box-shadow:0 0 4px rgba(93,180,255,.7);animation:tear 1.1s linear infinite}
+  .actor.cry .figure::before{left:33%}
+  .actor.cry .figure::after{right:33%;animation-delay:.55s}
+  @keyframes tear{0%{transform:translateY(0);opacity:.95}82%{opacity:.95}100%{transform:translateY(34px);opacity:0}}
   .alabel{color:#fff;font-weight:800;font-size:clamp(13px,1.5vw,19px);opacity:0;transform:translateY(6px);
     transition:opacity .3s,transform .3s;background:rgba(0,0,0,.45);padding:4px 12px;border-radius:20px;white-space:nowrap}
   .alabel.show{opacity:1;transform:none}
@@ -373,7 +382,7 @@ const TILE={
   donate:{name:'기부',color:'var(--t-donate)'},
   group:{name:'단체게임',color:'var(--t-group)'},
 };
-const BOARD=['start','mini','steal','mini','group','island','mini','swap','mini','bet',
+const BOARD=['start','mini','steal','mini','group','island','chance','swap','mini','bet',
              'shop','mini','steal','mini','chance','group','mini','steal','mini','donate'];
 const GRID=[[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[2,6],[3,6],[4,6],[5,6],
             [6,6],[6,5],[6,4],[6,3],[6,2],[6,1],[5,1],[4,1],[3,1],[2,1]];
@@ -574,36 +583,60 @@ function startGame(){
 }
 function rollForOrder(){
   openModal(`<h3>순서 정하기</h3>
-    <p>팀마다 한 번씩 주사위를 던집니다. 숫자가 큰 팀부터 매 턴 이동합니다.</p>
+    <p>팀마다 한 번씩 주사위를 던집니다. 숫자가 큰 팀부터 매 턴 이동하며, 같은 숫자가 나온 팀은 다시 던져 순서를 정합니다.</p>
     <div class="dice-stage" id="diceStage"><div class="die3d" id="die3d">?</div></div>
     <p id="diceMsg" style="text-align:center;font-weight:800;min-height:22px"></p>
     <div id="diceList"></div>
     <div class="mbtns" id="diceBtns"></div>`);
+  state.teams.forEach(t=>{t.dice=null;t.tb=[];});
+  const stage=document.getElementById('diceStage'),die=document.getElementById('die3d'),msg=document.getElementById('diceMsg');
+  const dieText=(t)=>t.dice==null?'–':(t.dice+(t.tb.length?' ('+t.tb.join(', ')+')':''));
   const list=()=>{document.getElementById('diceList').innerHTML=state.teams.map(t=>
     `<div class="dicerow"><span class="pdot" style="width:22px;height:22px;box-shadow:none;background:${t.color}"></span>
-     <span style="flex:1;font-weight:800">${t.name}</span><span class="dieval" id="die${t.id}">${t.dice!=null?t.dice:'–'}</span></div>`).join('');};
+     <span style="flex:1;font-weight:800">${t.name}</span><span class="dieval" id="die${t.id}">${dieText(t)}</span></div>`).join('');};
   list();
-  let idx=0,rolling=false;
-  const stage=document.getElementById('diceStage'),die=document.getElementById('die3d'),msg=document.getElementById('diceMsg');
-  function prompt(){msg.innerHTML=`<b>${state.teams[idx].name}</b> 차례입니다. 화면을 클릭해 주사위를 던지세요.`;}
+  const cmp=(a,b)=>{if(a.dice!==b.dice)return b.dice-a.dice;
+    const n=Math.max(a.tb.length,b.tb.length);
+    for(let i=0;i<n;i++){const x=a.tb[i]??-1,y=b.tb[i]??-1;if(x!==y)return y-x;}return 0;};
+  const keyEq=(a,b)=>{if(a.dice!==b.dice)return false;
+    const n=Math.max(a.tb.length,b.tb.length);
+    for(let i=0;i<n;i++){if((a.tb[i]??null)!==(b.tb[i]??null))return false;}return true;};
+  function tieGroups(){
+    const s=[...state.teams].sort(cmp);const groups=[];let cur=[s[0]];
+    for(let i=1;i<s.length;i++){if(keyEq(s[i],s[i-1]))cur.push(s[i]);else{if(cur.length>1)groups.push(cur);cur=[s[i]];}}
+    if(cur.length>1)groups.push(cur);return groups;
+  }
+  let queue=state.teams.map(t=>t.id), ptr=0, round=0, rolling=false;
+  function prompt(){const t=state.teams[queue[ptr]];msg.innerHTML=`<b>${t.name}</b> 차례입니다. 화면을 클릭해 주사위를 던지세요.`;}
+  function finalize(){
+    state.order=[...state.teams].sort(cmp).map(t=>t.id);
+    state.orderPos=0;state.turnIdx=state.order[0];renderSide();
+    msg.innerHTML='순서가 모두 정해졌습니다. 큰 숫자가 나온 팀부터 진행합니다.';
+    document.getElementById('diceBtns').innerHTML='<button class="btn" id="startBtn">게임 시작</button>';
+    document.getElementById('startBtn').onclick=()=>{closeModal();beginTurn();};
+  }
+  function nextRound(){
+    const groups=tieGroups();
+    if(!groups.length){finalize();return;}
+    const names=groups.map(g=>g.map(t=>t.name).join('와(과) ')).join(', ');
+    queue=[];groups.forEach(g=>g.forEach(t=>queue.push(t.id)));
+    ptr=0;round++;
+    msg.innerHTML=`${names}은(는) 같은 숫자네요. 이 팀들만 다시 던져 순서를 정합니다.`;
+    setTimeout(prompt,1100);
+  }
   prompt();
   stage.onclick=()=>{
-    if(rolling||idx>=state.teams.length)return;
+    if(rolling||ptr>=queue.length)return;
     rolling=true;die.classList.add('shake');
     let ticks=0;const iv=setInterval(()=>{die.textContent=1+Math.floor(Math.random()*6);
       if(++ticks>=14){clearInterval(iv);
-        const val=1+Math.floor(Math.random()*6);const t=state.teams[idx];t.dice=val;t._tie=Math.random();
+        const val=1+Math.floor(Math.random()*6);const t=state.teams[queue[ptr]];
+        if(round===0)t.dice=val;else t.tb.push(val);
         die.textContent=val;die.classList.remove('shake');list();
         msg.innerHTML=`${t.name}이(가) <b>${val}</b>이(가) 나왔습니다.`;
-        idx++;rolling=false;
-        if(idx<state.teams.length){setTimeout(prompt,700);}
-        else{
-          state.order=[...state.teams].sort((a,b)=>b.dice-a.dice||b._tie-a._tie).map(t=>t.id);
-          state.orderPos=0;state.turnIdx=state.order[0];renderSide();
-          msg.innerHTML='모든 팀이 주사위를 던졌습니다. 큰 숫자가 나온 팀부터 진행합니다.';
-          document.getElementById('diceBtns').innerHTML='<button class="btn" id="startBtn">게임 시작</button>';
-          document.getElementById('startBtn').onclick=()=>{closeModal();beginTurn();};
-        }
+        ptr++;rolling=false;
+        if(ptr<queue.length){setTimeout(prompt,700);}
+        else{setTimeout(nextRound,700);}
       }
     },70);
   };
@@ -1130,6 +1163,10 @@ function startCeremony(ranked){
     cer.querySelectorAll('.actor').forEach(a=>a.classList.remove('lit'));el.classList.add('lit');}
   function remaining(){return [...cer.querySelectorAll('.actor')].filter(a=>!a.classList.contains('out'));}
   function showScoreboard(){
+    cer.querySelectorAll('.actor').forEach(a=>{
+      if(a.classList.contains('champ'))return;
+      a.classList.remove('out','dim','lit');a.classList.add('cry');
+    });
     const rows=ranked.map((t,i)=>`<div class="sbrow"><span class="rk">${i+1}</span>
       <span class="pdot" style="width:20px;height:20px;box-shadow:none;background:${t.color}"></span>
       <span class="nm">${t.name}</span><span class="sc">${t.score.toLocaleString()}점</span></div>`).join('');
