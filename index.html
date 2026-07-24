@@ -304,6 +304,10 @@
   .sbrow .nm{flex:1;font-weight:800;color:var(--ink)}
   .sbrow .sc{font-weight:900;font-variant-numeric:tabular-nums;color:var(--ink)}
   .fw{position:absolute;width:8px;height:8px;border-radius:50%;z-index:8;pointer-events:none}
+  .ph-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);font-size:14px}
+  .ph-k{width:76px;color:var(--muted);font-weight:700;font-size:13px}
+  .ph-url{margin-top:10px;background:#f1f4fb;border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font-size:12.5px;word-break:break-all;color:var(--ink);text-align:left}
   .ce-prev{width:130px;height:130px;margin:2px auto 12px;display:flex;align-items:center;justify-content:center;
     background:#f3f6fc;border:1.5px solid var(--line);border-radius:16px}
   .ce-prev svg{width:104px;height:auto}
@@ -344,6 +348,7 @@
     <div class="turn" id="turnLabel">—</div>
     <div class="spacer"></div>
     <div class="timer">경과 <span id="clock">00:00</span> · 턴 <span id="turnCounter">0/0</span></div>
+    <button class="btn sec" id="phoneBtn" onclick="openPhoneLink()">폰 연결</button>
     <button class="btn ghost" onclick="endGameNow()">종료</button>
   </div>
   <div class="layout">
@@ -355,10 +360,11 @@
 <div id="toasts"></div>
 <div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
 
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <script>
 const TEAM_COLORS=['#ef4444','#3b82f6','#eab308','#a855f7','#10b981'];
 const TEAM_DEFAULT_NAMES=['1팀','2팀','3팀','4팀','5팀'];
-const START_SCORE=1000, PASS_START_BONUS=500, CHICKEN_STEAL=300, GROUP_WIN=1000;
+const START_SCORE=1000, PASS_START_BONUS=1000, CHICKEN_STEAL=300, GROUP_WIN=1000;
 
 const CARD_DEFS={
   small: {name:'작은 숫자 카드', desc:'내 차례에 사용 → 이동 룰렛이 1~5(각 2칸)으로 바뀐 뒤 굴림 (일회용)'},
@@ -607,7 +613,10 @@ function rollForOrder(){
     if(cur.length>1)groups.push(cur);return groups;
   }
   let queue=state.teams.map(t=>t.id), ptr=0, round=0, rolling=false;
-  function prompt(){const t=state.teams[queue[ptr]];msg.innerHTML=`<b>${t.name}</b> 차례입니다. 화면을 클릭해 주사위를 던지세요.`;}
+  function prompt(){const t=state.teams[queue[ptr]];
+    setRollGate(t.id,()=>rollOnce());
+    const sn=phoneLink.teams.has(t.id)?' 연결된 폰을 흔들어도 됩니다.':'';
+    msg.innerHTML=`<b>${t.name}</b> 차례입니다. 화면을 클릭해 주사위를 던지세요.${sn}`;}
   function finalize(){
     state.order=[...state.teams].sort(cmp).map(t=>t.id);
     state.orderPos=0;state.turnIdx=state.order[0];renderSide();
@@ -624,9 +633,9 @@ function rollForOrder(){
     msg.innerHTML=`${names}은(는) 같은 숫자네요. 이 팀들만 다시 던져 순서를 정합니다.`;
     setTimeout(prompt,1100);
   }
-  prompt();
-  stage.onclick=()=>{
+  function rollOnce(){
     if(rolling||ptr>=queue.length)return;
+    clearRollGate();
     rolling=true;die.classList.add('shake');
     let ticks=0;const iv=setInterval(()=>{die.textContent=1+Math.floor(Math.random()*6);
       if(++ticks>=14){clearInterval(iv);
@@ -639,7 +648,9 @@ function rollForOrder(){
         else{setTimeout(nextRound,700);}
       }
     },70);
-  };
+  }
+  stage.onclick=()=>rollOnce();
+  prompt();
 }
 function updateClock(){const s=Math.floor((Date.now()-state.startTime)/1000);
   document.getElementById('clock').textContent=
@@ -752,7 +763,9 @@ function showMoveOptions(){
   if(cur.cards.includes('reroll'))btns.push({label:'주사위 한 번 더 카드',sec:true,fn:useRerollCard});
   if(cur.cards.includes('skip'))btns.push({label:'지목 다음 턴 쉬기 카드',sec:true,fn:useSkipCard});
   if(cur.cards.includes('rob'))btns.push({label:'카드 뺏기 카드',sec:true,fn:useRobCard});
-  setAction(`<b>${cur.name}</b> 차례입니다. 이동 룰렛을 돌리거나 카드를 사용하세요.`,btns);
+  const shakeNote=phoneLink.teams.has(cur.id)?' 연결된 폰을 흔들어도 됩니다.':'';
+  setRollGate(cur.id,()=>doMove(null));
+  setAction(`<b>${cur.name}</b> 차례입니다. 이동 룰렛을 돌리거나 카드를 사용하세요.${shakeNote}`,btns);
 }
 function useRerollCard(){
   const cur=state.teams[state.turnIdx];
@@ -798,6 +811,7 @@ async function useRobCard(){
 }
 
 async function doMove(moveCard){
+  clearRollGate();
   const cur=state.teams[state.turnIdx];let steps;
   if(moveCard==='small'){removeCard(cur,'small');
     const idx=Math.floor(Math.random()*10);steps=ROULETTE.small[idx];
@@ -1120,6 +1134,7 @@ async function endTurn(){
   }
   if(state.rerollPending>0){
     state.rerollPending--;renderBoard();renderSide();updateTop();
+    setRollGate(state.turnIdx,()=>doMove(null));
     setAction(`<b>${state.teams[state.turnIdx].name}</b> 주사위 한 번 더! 한 번 더 이동하세요.`,
       [{label:'이동 룰렛 돌리기',fn:()=>doMove(null)}]);
     return;
@@ -1225,6 +1240,69 @@ function launchFireworks(root){
     if(++bursts<14)setTimeout(boom,420+Math.random()*350);
   };
   boom();
+}
+
+/* ================= 폰 흔들기 연동 ================= */
+const phoneLink={client:null,room:null,teams:new Set(),status:'미연결'};
+let rollGate=null;
+function setRollGate(teamId,fn){rollGate={team:teamId,fn};}
+function clearRollGate(){rollGate=null;}
+function onShake(teamId){
+  if(!rollGate||rollGate.team!==teamId)return;
+  const fn=rollGate.fn;clearRollGate();fn();
+}
+function makeRoom(){return String(Math.floor(1000+Math.random()*9000));}
+function controllerURL(){
+  const base=location.href.replace(/[^/]*$/,'');
+  return base+'controller.html'+(phoneLink.room?('?room='+phoneLink.room):'');
+}
+function phoneTopic(sub){return 'linkmarble/'+phoneLink.room+'/'+sub;}
+function connectPhones(room){
+  if(typeof mqtt==='undefined'){phoneLink.status='연결 실패 (인터넷 필요)';renderPhonePanel();return;}
+  if(phoneLink.client){try{phoneLink.client.end(true);}catch(e){}}
+  phoneLink.room=room;phoneLink.teams.clear();phoneLink.status='연결 중';renderPhonePanel();
+  const c=mqtt.connect('wss://broker.emqx.io:8084/mqtt',{clientId:'lm-host-'+Math.random().toString(16).slice(2),reconnectPeriod:3000});
+  phoneLink.client=c;
+  c.on('connect',()=>{phoneLink.status='연결됨';c.subscribe(phoneTopic('up'));renderPhonePanel();});
+  c.on('reconnect',()=>{phoneLink.status='재연결 중';renderPhonePanel();});
+  c.on('error',()=>{phoneLink.status='연결 오류';renderPhonePanel();});
+  c.on('close',()=>{if(phoneLink.status==='연결됨'){phoneLink.status='끊김';renderPhonePanel();}});
+  c.on('message',(topic,buf)=>{
+    let m;try{m=JSON.parse(buf.toString());}catch(e){return;}
+    if(typeof m.team!=='number')return;
+    if(m.type==='hello'){
+      phoneLink.teams.add(m.team);renderPhonePanel();
+      c.publish(phoneTopic('down'),JSON.stringify({type:'ack',team:m.team,
+        name:(state&&state.teams[m.team])?state.teams[m.team].name:('팀 '+(m.team+1))}));
+      if(state)eventFlash(((state.teams[m.team]&&state.teams[m.team].name)||('팀 '+(m.team+1)))+' 폰이 연결되었습니다');
+    }else if(m.type==='shake'){
+      phoneLink.teams.add(m.team);
+      onShake(m.team);
+    }
+  });
+}
+function renderPhonePanel(){
+  const el=document.getElementById('phonePanel');if(!el)return;
+  const names=[...phoneLink.teams].sort().map(i=>(state&&state.teams[i]?state.teams[i].name:('팀 '+(i+1)))).join(', ');
+  el.innerHTML=`<div class="ph-row"><span class="ph-k">상태</span><b>${phoneLink.status}</b></div>
+    <div class="ph-row"><span class="ph-k">방 번호</span><b style="font-size:22px;letter-spacing:.1em">${phoneLink.room||'—'}</b></div>
+    <div class="ph-row"><span class="ph-k">연결된 팀</span><b>${names||'없음'}</b></div>
+    <div class="ph-url">${controllerURL()}</div>`;
+  const btn=document.getElementById('phoneBtn');
+  if(btn)btn.textContent=phoneLink.teams.size?('폰 '+phoneLink.teams.size):'폰 연결';
+}
+function openPhoneLink(){
+  if(!phoneLink.room)phoneLink.room=makeRoom();
+  openModal(`<h3>폰으로 흔들어 굴리기</h3>
+    <p>각 팀 아이폰 사파리에서 아래 주소를 열고, 방 번호와 팀을 고른 뒤 연결하세요.
+       자기 팀 차례에 폰을 흔들면 이동 룰렛이 돌아갑니다. 화면 클릭 방식도 그대로 쓸 수 있어요.</p>
+    <div id="phonePanel"></div>
+    <div class="mbtns row">
+      <button class="btn" id="phConnect">연결 시작</button>
+      <button class="btn ghost" onclick="closeModal()">닫기</button>
+    </div>`);
+  renderPhonePanel();
+  document.getElementById('phConnect').onclick=()=>connectPhones(phoneLink.room);
 }
 
 const overlay=document.getElementById('overlay'),modal=document.getElementById('modal');
