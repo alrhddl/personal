@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>링크 마블 · 팀 컨트롤러</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1730; --card:#ffffff; --ink:#1f2a3a; --muted:#6b7688;
+    --line:#e3e9f2; --primary:#5b7cfa; --team:#5b7cfa;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',sans-serif;
+    background:var(--bg);color:#fff;display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);overflow:hidden}
+  .wrap{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;max-width:460px;
+    width:100%;margin:0 auto;padding:20px 0}
+  h1{font-size:20px;margin:0;text-align:center;font-weight:800}
+  .sub{font-size:13px;color:#9fb0d0;text-align:center;margin:0}
+  .card{background:var(--card);color:var(--ink);border-radius:18px;padding:18px}
+  label{display:block;font-size:13px;font-weight:800;color:var(--muted);margin-bottom:7px}
+  input{width:100%;font-size:26px;font-weight:800;text-align:center;letter-spacing:.22em;
+    padding:12px;border:2px solid var(--line);border-radius:12px;color:var(--ink);
+    background:#f8fafd;font-family:inherit}
+  input:focus{outline:none;border-color:var(--primary)}
+  .teams{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+  .tbtn{padding:12px 0;border-radius:12px;border:2px solid var(--line);background:#f8fafd;
+    font-size:15px;font-weight:800;color:var(--ink);font-family:inherit}
+  .tbtn.on{color:#fff;border-color:transparent}
+  .big{width:100%;padding:18px;border:none;border-radius:16px;background:var(--primary);color:#fff;
+    font-size:18px;font-weight:800;font-family:inherit;margin-top:16px}
+  .big:disabled{opacity:.45}
+  .note{font-size:12px;color:#9fb0d0;text-align:center;line-height:1.6;margin:0}
+
+  /* 흔들기 화면 */
+  #play{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);
+    padding:8px 16px;border-radius:99px;font-size:14px;font-weight:800}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--team)}
+  .phone{width:126px;height:200px;border-radius:26px;border:5px solid #fff;position:relative;
+    background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.04));
+    animation:sway 1.5s ease-in-out infinite}
+  @keyframes sway{0%,100%{transform:rotate(-11deg)}50%{transform:rotate(11deg)}}
+  .phone::after{content:'';position:absolute;top:12px;left:50%;transform:translateX(-50%);
+    width:42px;height:5px;border-radius:3px;background:rgba(255,255,255,.6)}
+  .headline{font-size:26px;font-weight:900;margin:0}
+  .count{font-size:14px;color:#9fb0d0}
+  .tap{padding:16px 30px;border-radius:99px;border:2px solid rgba(255,255,255,.5);
+    background:transparent;color:#fff;font-size:15px;font-weight:800;font-family:inherit}
+  .flash{position:fixed;inset:0;background:var(--team);opacity:0;pointer-events:none;transition:opacity .18s}
+  .flash.on{opacity:.85}
+  .foot{padding:10px 0 6px;text-align:center}
+  .link{background:none;border:none;color:#9fb0d0;font-size:13px;text-decoration:underline;font-family:inherit}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="setup">
+  <h1>링크 마블 팀 컨트롤러</h1>
+  <p class="sub">폰을 흔들어 이동 룰렛을 굴립니다</p>
+
+  <div class="card">
+    <label for="room">방 번호</label>
+    <input id="room" inputmode="numeric" maxlength="4" placeholder="0000">
+    <label style="margin-top:16px">우리 팀</label>
+    <div class="teams" id="teams"></div>
+    <button class="big" id="joinBtn" disabled>연결하기</button>
+  </div>
+
+  <p class="note">게임 화면의 <b>폰 연결</b> 버튼에서 방 번호를 확인하세요.<br>
+    연결하기를 누르면 움직임 감지 권한을 물어봅니다. 허용해 주세요.</p>
+</div>
+
+<div id="play">
+  <div class="badge"><span class="dot"></span><span id="who">1팀</span> · 방 <span id="roomLabel">0000</span></div>
+  <div class="phone"></div>
+  <h2 class="headline" id="headline">폰을 흔드세요</h2>
+  <p class="count" id="count">내 차례에 흔들면 룰렛이 돌아갑니다</p>
+  <button class="tap" id="tapBtn">흔들기 대신 눌러서 굴리기</button>
+  <div class="foot"><button class="link" id="backBtn">팀 다시 선택</button></div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<script>
+const COLORS=['#ef4444','#3b82f6','#eab308','#a855f7','#10b981'];
+let team=null, room='', client=null, ready=false;
+
+/* 팀 버튼 */
+const teamsEl=document.getElementById('teams');
+COLORS.forEach((c,i)=>{
+  const b=document.createElement('button');b.className='tbtn';b.textContent=(i+1)+'팀';
+  b.onclick=()=>{team=i;
+    [...teamsEl.children].forEach((x,j)=>{x.classList.toggle('on',j===i);x.style.background=j===i?COLORS[j]:'#f8fafd';});
+    document.documentElement.style.setProperty('--team',c);
+    checkReady();};
+  teamsEl.appendChild(b);
+});
+const roomInput=document.getElementById('room');
+const urlRoom=new URLSearchParams(location.search).get('room');
+if(urlRoom)roomInput.value=urlRoom.replace(/\D/g,'').slice(0,4);
+roomInput.addEventListener('input',checkReady);
+function checkReady(){
+  document.getElementById('joinBtn').disabled=!(team!==null&&roomInput.value.length===4);
+}
+checkReady();
+
+/* 연결 + 권한 요청 (사용자 탭 안에서 실행해야 함) */
+document.getElementById('joinBtn').onclick=async ()=>{
+  room=roomInput.value;
+  let motionOK=true;
+  try{
+    if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
+      const r=await DeviceMotionEvent.requestPermission();
+      motionOK=(r==='granted');
+    }
+  }catch(e){motionOK=false;}
+  startPlay(motionOK);
+  connect();
+};
+
+function startPlay(motionOK){
+  document.getElementById('setup').style.display='none';
+  const play=document.getElementById('play');play.style.display='flex';
+  document.getElementById('who').textContent=(team+1)+'팀';
+  document.getElementById('roomLabel').textContent=room;
+  if(motionOK){enableShake();}
+  else{
+    document.getElementById('headline').textContent='버튼으로 굴리기';
+    document.getElementById('count').textContent='움직임 감지가 꺼져 있어 버튼으로 진행합니다';
+  }
+}
+
+/* 흔들기 감지 */
+function enableShake(){
+  let last={x:0,y:0,z:0}, lastTime=0, cooldown=0;
+  window.addEventListener('devicemotion',(e)=>{
+    const a=e.accelerationIncludingGravity;if(!a)return;
+    const now=Date.now();
+    if(now-lastTime<80)return;
+    lastTime=now;
+    const d=Math.abs(a.x-last.x)+Math.abs(a.y-last.y)+Math.abs(a.z-last.z);
+    last={x:a.x,y:a.y,z:a.z};
+    if(d>28 && now>cooldown){cooldown=now+1200;sendShake();}
+  });
+}
+
+/* 전송 */
+function topic(sub){return 'linkmarble/'+room+'/'+sub;}
+function connect(){
+  if(typeof mqtt==='undefined'){setStatus('연결 실패 · 인터넷 확인');return;}
+  client=mqtt.connect('wss://broker.emqx.io:8084/mqtt',
+    {clientId:'lm-ctl-'+Math.random().toString(16).slice(2),reconnectPeriod:3000});
+  client.on('connect',()=>{
+    ready=true;client.subscribe(topic('down'));
+    client.publish(topic('up'),JSON.stringify({type:'hello',team}));
+    setStatus('연결됨 · 내 차례에 흔드세요');
+  });
+  client.on('reconnect',()=>{ready=false;setStatus('재연결 중');});
+  client.on('close',()=>{ready=false;});
+  client.on('message',(t,buf)=>{
+    let m;try{m=JSON.parse(buf.toString());}catch(e){return;}
+    if(m.type==='ack'&&m.team===team&&m.name){document.getElementById('who').textContent=m.name;}
+  });
+}
+function setStatus(s){document.getElementById('count').textContent=s;}
+function sendShake(){
+  if(!client||!ready)return;
+  client.publish(topic('up'),JSON.stringify({type:'shake',team}));
+  buzz();
+}
+function buzz(){
+  const f=document.getElementById('flash');f.classList.add('on');
+  document.getElementById('headline').textContent='굴렸습니다';
+  setTimeout(()=>{f.classList.remove('on');
+    document.getElementById('headline').textContent='폰을 흔드세요';},420);
+}
+document.getElementById('tapBtn').onclick=sendShake;
+document.getElementById('backBtn').onclick=()=>location.reload();
+
+/* 화면 꺼짐 방지(지원 시) */
+if('wakeLock' in navigator){navigator.wakeLock.request('screen').catch(()=>{});}
+</script>
+</body>
+</html>
